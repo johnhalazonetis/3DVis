@@ -1,0 +1,12 @@
+files:
+  original_image: "../test_images/many_cones.jpg"
+  binary_image: "../test_images/yellow_binary.jpg"
+  save_images: "../test_images/"
+
+canny:
+  lower_boundary = 150
+  upper_boundary = 200
+
+blob_properties:
+  area_lower_bound = 55
+  area_upper_bound = 5000
