@@ -67,7 +67,7 @@ cv2.imshow('Canny Edges', G)
 cv2.waitKey(0)
 
 ret, thresh = cv2.threshold(B, 127, 255, 0, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
-_, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+contours, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
 cnts = cv2.drawContours(E, contours[0], -1, (0, 255, 0), 1)
 

@@ -53,5 +53,3 @@ cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
 cv2.imshow('IMG', filtered)
 cv2.waitKey(0)
 
-# Draw a line:
-# cv2.line(img, (20, 160), (100, 160), (0, 0, 255), 10)
