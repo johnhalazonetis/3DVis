@@ -33,6 +33,7 @@ def yaml_loader(filepath):
         data = yaml.load(file_descriptor)
     return data
 
+
 # Define file name
 filepath = "variables.yaml"
 data = yaml_loader(filepath)
@@ -53,3 +54,6 @@ cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
 cv2.imshow('IMG', filtered)
 cv2.waitKey(0)
 
+# epsilon = 0.1*cv2.arcLength(contours[0], True)
+# approx = cv2.approxPolyDP(contours[0], epsilon, True)
+# cv2.drawContours(img, [approx], 0, (255, 255, 255), 3)
