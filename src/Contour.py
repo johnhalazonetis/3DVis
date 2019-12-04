@@ -21,6 +21,13 @@ def find_blob_center(input_image, contours, area_lower, area_upper):
         cv2.circle(input_image, (cX, cY), int(2), (0, 0, 255), int(1))
 
 
+def simplify_contours(input_image, contours, scaling_factor):
+    for cnt in contours:
+        epsilon = scaling_factor * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, epsilon, True)
+        cv2.drawContours(input_image, [approx], 0, (0, 0, 255), 1)
+
+
 def remove_noise(input_image):
     kernel = np.ones((3, 3), np.uint8)
     output = cv2.morphologyEx(input_image, cv2.MORPH_OPEN, kernel, iterations=2)
@@ -54,6 +61,8 @@ cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
 cv2.imshow('IMG', filtered)
 cv2.waitKey(0)
 
-# epsilon = 0.1*cv2.arcLength(contours[0], True)
-# approx = cv2.approxPolyDP(contours[0], epsilon, True)
-# cv2.drawContours(img, [approx], 0, (255, 255, 255), 3)
+# TODO: Need to find formula to determine the value of scaling_factor
+simplify_contours(img, contours, 0.01)
+
+cv2.imshow('IMG', img)
+cv2.waitKey(0)
