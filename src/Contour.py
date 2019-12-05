@@ -54,12 +54,14 @@ filtered = remove_noise(img)
 
 contours = find_contours(filtered)
 
-# find_blob_center(filtered, contours, 55, 5000)
+'''
+find_blob_center(filtered, contours, 55, 5000)
 
-# cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
+cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
 
-# cv2.imshow('IMG', filtered)
-# cv2.waitKey(0)
+cv2.imshow('IMG', filtered)
+cv2.waitKey(0)
+'''
 
 # TODO: Need to find formula to determine the value of scaling_factor
 simplify_contours(filtered, contours, 0.0075)

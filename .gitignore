@@ -1,2 +1,5 @@
 # Ignore all test images
 test_images
+
+# Ignore virtual environments
+venv
