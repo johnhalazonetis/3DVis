@@ -21,11 +21,11 @@ def find_blob_center(input_image, contours, area_lower, area_upper):
         cv2.circle(input_image, (cX, cY), int(2), (0, 0, 255), int(1))
 
 
-def simplify_contours(input_image, contours, scaling_factor):
+def simplify_contours(output_image, contours, scaling_factor):
     for cnt in contours:
         epsilon = scaling_factor * cv2.arcLength(cnt, True)
         approx = cv2.approxPolyDP(cnt, epsilon, True)
-        cv2.drawContours(input_image, [approx], 0, (0, 0, 255), 1)
+        cv2.drawContours(output_image, [approx], 0, (0, 0, 255), 1)
 
 
 def remove_noise(input_image):
@@ -34,11 +34,11 @@ def remove_noise(input_image):
     return output
 
 
-def yaml_loader(filepath):
+def yaml_loader(file_path):
     # Loads a yaml file
-    with open(filepath, "r") as file_descriptor:
-        data = yaml.load(file_descriptor)
-    return data
+    with open(file_path, "r") as file_descriptor:
+        file_data = yaml.load(file_descriptor, Loader=yaml.FullLoader)
+    return file_data
 
 
 # Define file name
@@ -54,15 +54,15 @@ filtered = remove_noise(img)
 
 contours = find_contours(filtered)
 
-find_blob_center(filtered, contours, 55, 5000)
+# find_blob_center(filtered, contours, 55, 5000)
 
-cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
+# cv2.drawContours(filtered, contours, -1, (255, 0, 0), int(1))
 
-cv2.imshow('IMG', filtered)
-cv2.waitKey(0)
+# cv2.imshow('IMG', filtered)
+# cv2.waitKey(0)
 
 # TODO: Need to find formula to determine the value of scaling_factor
-simplify_contours(img, contours, 0.01)
+simplify_contours(filtered, contours, 0.0075)
 
-cv2.imshow('IMG', img)
+cv2.imshow('IMG', filtered)
 cv2.waitKey(0)
