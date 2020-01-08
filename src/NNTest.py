@@ -1,6 +1,9 @@
 import torch
+import torchvision
+from torchvision import transforms, datasets
 
-x = torch.Tensor([5, 3])
-y = torch.Tensor([2, 1])
+train = datasets.MNIST("", train=True, download=True, transform=transforms.Compose([transforms.ToTensor()]))
 
-print(x*y)
+test = datasets.MNIST("", train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
+
+#TODO: Fix Error: ImportError: cannot import name 'PILLOW_VERSION' from 'PIL'
