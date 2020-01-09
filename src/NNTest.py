@@ -60,7 +60,7 @@ total = 0
 with torch.no_grad():
     for data in trainset:
         X, y = data
-        output = net(X.view(-1, 28*8))
+        output = net(X.view(-1, 28*28))
         for idx, i in enumerate(output):
             if torch.argmax(i) == y[idx]:
                 correct += 1
