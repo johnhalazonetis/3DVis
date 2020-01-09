@@ -6,3 +6,4 @@ venv
 
 # Ignore MNIST folder (fake dataset for NN training)
 src/MNIST
+src/PetImages

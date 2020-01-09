@@ -69,8 +69,8 @@ with torch.no_grad():
 print("Accuracy: ", round(correct/total, 3))
 
 # We display the image of the handwritten digit
-plt.imshow(X[2].view(28, 28))
+plt.imshow(X[3].view(28, 28))
 plt.show()
 
 # The network figures out which digit it is seeing and prints it
-print(torch.argmax(net(X[2].view(-1, 28*28))[0]))
+print(torch.argmax(net(X[3].view(-1, 28*28))[0]))
