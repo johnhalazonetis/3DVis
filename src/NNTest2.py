@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
-
 REBUILD_DATA = True    # set to true to one once, then back to false unless you want to change something in your training data.
 
 
@@ -63,6 +62,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(self._to_linear, 512)  # flattening.
         self.fc2 = nn.Linear(512, 2)    # 512 in, 2 out bc we're doing 2 classes (dog vs cat).
 
+    # TODO: Look into torch.flatten command to clean up this part!
     def convs(self, x):
         # max pooling over 2x2
         x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
@@ -111,6 +111,8 @@ BATCH_SIZE = 100
 EPOCHS = 1
 
 
+
+
 def train(net):
     for epoch in range(EPOCHS):
         for i in tqdm(range(0, len(train_X), BATCH_SIZE)):  # from 0, to the len of x, stepping BATCH_SIZE at a time. [:50] ..for now just to dev
@@ -147,4 +149,3 @@ def test(net):
 train(net)
 
 test(net)
-
