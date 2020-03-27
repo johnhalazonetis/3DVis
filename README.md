@@ -25,6 +25,9 @@ For now we are not using neural networks in the system, we are just looking to s
 
 When we reach our limit of this, and when we have more experience with PyTorch NNs, we will then implement our NN to recognize cone AND be able to place them in a 3D space.
 
+## Moving to C++
+Given the speed of C++, we can obtain better speed results with C++.
+
 ## Appendix
 ### Dependencies (for non-neural network scripts):
 3DVis uses Python 3.6 as its programming language, and uses the following libraries listed below:

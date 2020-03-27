@@ -1,11 +1,5 @@
-# Ignore virtual environments
-venv
+# Ignore vscode settings
+.vscode
 
-# Ignore data folders
-test_images
-src/MNIST
-src/PetImages
-PetImages
-
-# Ignore training data
-src/training_data.npy
+# Ignore build directory
+build/
