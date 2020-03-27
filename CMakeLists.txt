@@ -6,6 +6,8 @@ find_package( OpenCV REQUIRED )
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-add_executable( 3DVis src/learning.cpp )
+add_executable( learning src/learning.cpp )
+add_executable( learning2 src/learning2.cpp )
 
-target_link_libraries( 3DVis ${OpenCV_LIBS} )
+target_link_libraries( learning ${OpenCV_LIBS} )
+target_link_libraries( learning2 ${OpenCV_LIBS} )
