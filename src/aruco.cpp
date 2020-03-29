@@ -24,7 +24,7 @@ void createArucoMarkers()
 
         ostringstream convert;
 
-        string imageName = "4x4Marker_";
+        string imageName = "../markers/4x4Marker_";
 
         convert << imageName << i << ".jpg";
 

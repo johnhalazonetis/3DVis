@@ -6,3 +6,5 @@ build/
 
 # Ignore video directory
 videos/
+
+# Ignore markers directory
