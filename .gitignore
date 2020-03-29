@@ -8,3 +8,4 @@ build/
 videos/
 
 # Ignore markers directory
+markers/
