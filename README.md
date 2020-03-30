@@ -29,6 +29,21 @@ When we reach our limit of this, and when we have more experience with PyTorch N
 Given the speed of C++, we can obtain better speed results with C++.
 
 ## Appendix
+
+*Note:* All dependencies can be install using the sheel scripts included in the ```dependiencies``` directory included with the 3DVis repo. *It is however recommended that users running anything other than a debian-based system should either modify the scripts or type in the commands one by one to install dependencies without any errors*.
+
+If you do have a debian-based system, you can follow the instruction below to install all dependencies needed to run 3DVis (you will need ```sudo``` permissions):
+
+### Instructions to running the installation scripts to install deendencies
+1. Start by going into the ```dependiencies``` directory by opening a terminal and typing in the command:
+    ```cd dependencies```
+
+2. Change the mode of the scripts to that you can run them on your system:
+    ```chmod +x *.sh```
+
+3. Run all scripts (or one by one) by typing:
+    ```sudo ./*.sh```   (respectively ```sudo ./<name-of-script>.sh``` if you only want to run one script at a time)
+
 ### Dependencies (for non-neural network scripts):
 3DVis uses Python 3.6 as its programming language, and uses the following libraries listed below:
 
