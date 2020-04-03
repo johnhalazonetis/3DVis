@@ -36,3 +36,7 @@ make -j4	# You can change the number of cores you want to use to build the libra
 make install
 
 exit
+
+pkg-config --modversion opencv4
+
+python3 -c "import cv2; print(cv2.__version__)"
