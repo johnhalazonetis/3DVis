@@ -8,11 +8,11 @@ const int fps = 60;
 
 int main(int argv, char** argc) {
 
-    Mat frame;                                  // Store the current frame
+    Mat frame;                                      // Store the current frame
 
-    VideoCapture vid("../videos/test.mov");     // VideoCapture object - vid can load in stream data, webcam, or a video file
+    VideoCapture vid("../videos/test-40.mov");      // VideoCapture object - vid can load in stream data, webcam, or a video file
 
-    // if (!vid.isOpened) {                        // If no video is detected, exit the program (for live feeds only)
+    // if (!vid.isOpened()) {                       // If no video is detected, exit the program (for live feeds only)
     //     return -1;
     // }
 

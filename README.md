@@ -42,3 +42,7 @@ If you do have a debian-based system, you can follow the instruction below to in
 
 3. Run all scripts (or one by one) by typing:
     ```sudo ./*.sh```   (respectively ```sudo ./<name-of-script>.sh``` if you only want to run one script at a time)
+
+#### Documentation of Used Libraries
+
+* [OpenCV 4.2.0 Documentation](https://docs.opencv.org/4.2.0/index.html)
