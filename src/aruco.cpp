@@ -14,7 +14,7 @@ using namespace cv;
 
 const float calibrationSquareDimension = 0.03f;   // Dimension of side of one square [m]
 const float arucoSquareDimenstion = 0.0382f;        // Dimension of side of one aruco square [m]
-const Size chessboardDimensions = Size(4, 8);       // Number of square on Chessboard calibration page
+const Size chessboardDimensions = Size(7, 7);       // Number of square on Chessboard calibration page
 
 void createArucoMarkers()       // Function to create the Aruco markers for us and put them in the "markers" directory
 {
@@ -54,7 +54,7 @@ void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundC
     {
         vector<Point2f> pointBuf;
 
-        bool found = findChessboardCorners(*iter, Size(4,8), pointBuf, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
+        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
 
         if (found)
         {
@@ -63,7 +63,7 @@ void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundC
 
         if (showResults)
         {
-            drawChessboardCorners(*iter, Size(4, 8), pointBuf, found);
+            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);
             imshow("Looking for corners", *iter);
             waitKey(0);
         }
@@ -73,7 +73,6 @@ void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundC
 int main(int argv, char** argc)
 {
     Mat frame;                                                      // Define frame as matrix
-    Mat drawToFrame;                                                // Define matrix that we will use to draw stuff on current frame
 
     Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                      // Define camera calibration matrix
 
@@ -81,14 +80,14 @@ int main(int argv, char** argc)
 
     vector<vector<Point2f>> markerCorners, rejectedCandidates;
 
-    VideoCapture vid("../videos/chessboard-3.mov");                   // Define VideoCapture element (where we define the input source of the video)
+    VideoCapture vid("../videos/chessboard-2.mov");                 // Define VideoCapture element (where we define the input source of the video)
 
-    // if (!vid.isOpened())                                            // If no video is detected, exit the program
-    // {
-    //     return -1;
-    // }
+    if (!vid.isOpened())                                            // If no video is detected, exit the program
+    {
+        return -1;
+    }
 
-    int framesPerSecond = 30;                                       // Define the framerate of the videos we are dealing with
+    int framesPerSecond = 60;                                       // Define the framerate of the videos we are dealing with
 
     namedWindow("Video Input", WINDOW_AUTOSIZE);                    // Make window with video input
 
@@ -100,25 +99,20 @@ int main(int argv, char** argc)
         }
 
         vector<Vec2f> foundPoints;                                  // Define vector where the found points are on the image
-        bool found = false;                                         // Define a 'found' boolean, set to false (we haven't found any points yet)
 
 
-        found = findChessboardCorners(frame, chessboardDimensions, foundPoints);        // Use findChessboardCorners function (built into OpenCV) to find points on checker board and put the coordinates into foundPoint vector
-        frame.copyTo(drawToFrame);                                  // Copy current frame into drawToFrame
+        bool found = findChessboardCorners(frame, chessboardDimensions, foundPoints, CALIB_CB_FAST_CHECK);  // Use findChessboardCorners function (built into OpenCV) to find points on checker board and put the coordinates into foundPoint vector
 
-        drawChessboardCorners(drawToFrame, chessboardDimensions, foundPoints, found);   // Use drawChessboardCorners function (built into OpenCV) to draw the chessboard corners on the drawToFrame frame
+        drawChessboardCorners(frame, chessboardDimensions, foundPoints, found);                             // Use drawChessboardCorners function (built into OpenCV) to draw the chessboard corners on the drawToFrame frame
 
+        for (auto i = foundPoints.begin(); i != foundPoints.end(); ++i)
+            {cout << *i << endl;}
+        cout << endl;
 
-        if (found)                                                  // If we have found corners
-        {
-            imshow("Webcam", drawToFrame);                          // Show the frame with indicated points on it
+        imshow("Video", frame);
 
-        } else {
+        waitKey(1);
 
-            imshow("Webcam", frame);                                // Otherwise, just show the original frame from the input video without any indicators
-        }
-        
-        char character = waitKey(1000 / framesPerSecond);           // waitkey function for video (varies with fps)
     }
 
     return 0;
