@@ -1,4 +1,4 @@
-#Install OpenCV on Unix
+# Install OpenCV on Unix
 
 # First we update the system and install the dependencies:
 sudo apt-get update
