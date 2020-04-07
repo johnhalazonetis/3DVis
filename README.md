@@ -21,19 +21,32 @@ We also want to be able to position these cones in 3D space whilst only using on
 For now we are not using neural networks in the system, we are just looking to see how much we can filter our data using openCV's tools while maintaining a high speed calculation (to be able to perform at 60 fps).
 
 ## Alternative Goals
-* Learning more about C++
-* Learning how to use C++ libraries
+* Learning more C++
 * Learning OpenCV in C++
 
-## Appendix
+# Setting Things Up
 
-### Dependencies
+Start by cloning the repo onto your computer: ```git clone https://github.com/johnhalazonetis/3DVis.git```.
+
+Go into the folder: ```cd 3DVis```
+
+Make build directory and go cd into it: ```mkdir build && cd build```
+
+After installing the required dependencies (see Appendix) you can build the project:
+	```cmake ..```
+	```make```
+
+You can then execute any one of the executables in the build directory (they have the same as the scripts in the ```src``` directory), e.g. ```./PixelPerfect```.
+
+# Appendix
+
+## Dependencies
 
 *Note:* All dependencies can be install using the sheel scripts included in the ```dependiencies``` directory included with the 3DVis repo. *It is however recommended that users running anything other than a debian-based system should either modify the scripts or type in the commands one by one to install dependencies without any errors*.
 
 If you do have a debian-based system, you can follow the instruction below to install all dependencies needed to run 3DVis (you will need ```sudo``` permissions):
 
-#### Instructions to running the installation scripts to install deendencies
+### Instructions to running the installation scripts to install deendencies
 1. Start by going into the ```dependiencies``` directory by opening a terminal and typing in the command:
     ```cd dependencies```
 
