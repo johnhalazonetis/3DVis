@@ -175,29 +175,32 @@ int main(int argv, char** argc)
 
         switch(character)
         {
-            case ' ':
-                // saving image
+            case ' ':                                             // Space Bar: Save Image
                 cout << "Input <SPACE> recieved" << endl;
                 if (found)
                 {
                     Mat temp;
                     frame.copyTo(temp);
                     savedImages.push_back(temp);
+                    cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;
+                } else {
+                    cout << "   No chessboard found in this frame, try another!" << endl;
                 }
                 break;
-            case 13:
-                // start calibration
-                cout << "Input <ENTER> recieved" << endl;
+            case 13:                                              // Enter Key: Start calibration
+                cout << "Input <ENTER> recieved!" << endl;;
                 if (savedImages.size() > 15)
                 {
+                    cout << "   Enough images saved! Starting calibration...     ";
                     cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);
                     saveCameraCalibration("cameraCalibration", cameraMatrix, distanceCoefficients);
+                    cout << "Camera calibrated using " << savedImages.size() << " images!" << endl;
+                } else {
+                    cout << "   Not enough saved images! Press space a few more times..." << endl;
                 }
-
                 break;
-            case 27:
-                // exit
-                cout << "Input <ESC> recieved" << endl;
+            case 27:                                              // Escape Key: Exit
+                cout << "Input <ESC> recieved! Exiting..." << endl;
                 return 0;
                 break;
         }
