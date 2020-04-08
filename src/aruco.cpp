@@ -5,8 +5,6 @@
 #include <opencv2/aruco.hpp>
 #include <opencv2/calib3d.hpp>
 
-#include <time.h>
-
 #include <sstream>
 #include <iostream>
 #include <fstream>
@@ -15,7 +13,7 @@ using namespace std;
 using namespace cv;
 
 const float calibrationSquareDimension = 0.03f;     // Dimension of side of one square [m]
-const float arucoSquareDimenstion = 0.0382f;        // Dimension of side of one aruco square [m]
+const float arucoSquareDimension = 0.0382f;        // Dimension of side of one aruco square [m]
 const Size chessboardDimensions = Size(4, 8);       // Number of square on Chessboard calibration page
 
 void createArucoMarkers()                           // Function to create the Aruco markers for us and put them in the "markers" directory
@@ -72,6 +70,48 @@ void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundC
     }
 }
 
+int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension)
+{
+    Mat frame;
+
+    vector<int> markerIDs;
+    vector<vector<Point2f>> markerCorners, rejectedCandidates;
+
+    aruco::DetectorParameters parameters;
+    Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);
+
+    VideoCapture vid("../videos/aruco.mov");
+
+    if (!vid.isOpened()) {
+        return -1;
+    }
+
+    namedWindow("Video", WINDOW_AUTOSIZE);
+
+    vector<Vec3d> rotationVectors, translationVectors;
+
+    while (true) {
+        if (!vid.read(frame)) {
+          break;
+        }
+
+        aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);
+        aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors);
+
+        for (int i = 0; i < markerIDs.size(); i++)
+        {
+            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors, 0.1f);
+        }
+
+        imshow("Video", frame);
+        if (waitKey(30) >= 0) {
+          break;
+        }
+    }
+    return 1;
+
+}
+
 void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)
 {
     vector<vector<Point2f>> checkerboardImageSpacePoints;
@@ -90,13 +130,15 @@ void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squa
 
 }
 
-bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficients)
-{
+bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficients) {
     ofstream outStream(name);
     if (outStream)
     {
         uint16_t rows = cameraMatrix.rows;
         uint16_t columns = cameraMatrix.cols;
+
+        outStream << rows << endl;
+        outStream << columns << endl;
 
         for (int r = 0; r < rows; r++)
         {
@@ -109,6 +151,9 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
 
         rows = distanceCoefficients.rows;
         columns = distanceCoefficients.cols;
+
+        outStream << rows << endl;
+        outStream << columns << endl;
 
         for (int r = 0; r < rows; r++)
         {
@@ -125,6 +170,53 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
 
     return false;
 }
+
+bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients) {
+
+    ifstream inStream(name);
+
+    if (inStream){
+        uint16_t rows;
+        uint16_t columns;
+
+        inStream >> rows;
+        inStream >> columns;
+
+        cameraMatrix = Mat(Size(rows, columns), CV_64F);
+
+        for (int r = 0; r < rows; r++){
+            for(int c = 0; c < columns; c++){
+                double read = 0.0f;
+                inStream >> read;
+                cameraMatrix.at<double>(r, c) = read;
+                cout << cameraMatrix.at<double>(r, c) << endl;
+            }
+        }
+
+        //Distance Coefficients
+        inStream >> rows;
+        inStream >> columns;
+
+        distanceCoefficients = Mat::zeros(rows, columns, CV_64F);
+
+        for (int r = 0; r < rows; r++){
+            for(int c = 0; c < columns; c++){
+                double read = 0.0f;
+
+                inStream >> read;
+
+                distanceCoefficients.at<double>(r, c) = read;
+                cout << distanceCoefficients.at<double>(r, c) << endl;
+            }
+        }
+        inStream.close();
+        return true;
+
+    }
+
+    return false;
+}
+
 
 int main(int argv, char** argc)
 {
@@ -173,35 +265,35 @@ int main(int argv, char** argc)
 
         char character = waitKey(1);
 
-        switch(character)
+        switch(character)                                                                                           // Depending on which character we press on the keyboard...
         {
-            case ' ':                                             // Space Bar: Save Image
-                cout << "Input <SPACE> recieved" << endl;
-                if (found)
+            case ' ':                                                                                               // Space Bar: Save Image
+                cout << "Input <SPACE> recieved" << endl;                                                           // Output message
+                if (found)                                                                                          // If the chessboard is found in the current frame...
                 {
-                    Mat temp;
-                    frame.copyTo(temp);
-                    savedImages.push_back(temp);
-                    cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;
+                    Mat temp;                                                                                       // Create a temporary matrix
+                    frame.copyTo(temp);                                                                             // Copy the frame to the temporary matrix
+                    savedImages.push_back(temp);                                                                    // Add the temporary frame to the list of saved images
+                    cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;               // Output message to confirm that the image was saved
                 } else {
-                    cout << "   No chessboard found in this frame, try another!" << endl;
+                    cout << "   No chessboard found in this frame, try another!" << endl;                           // Output message telling us that the chessboard was not found in that frame
                 }
                 break;
-            case 13:                                              // Enter Key: Start calibration
-                cout << "Input <ENTER> recieved!" << endl;;
-                if (savedImages.size() > 15)
+            case 13:                                                                                                // Enter Key: Start calibration
+                cout << "Input <ENTER> recieved!" << endl;;                                                         // Output message
+                if (savedImages.size() > 15)                                                                        // If there are more than 15 images saved...
                 {
-                    cout << "   Enough images saved! Starting calibration...     ";
-                    cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);
-                    saveCameraCalibration("cameraCalibration", cameraMatrix, distanceCoefficients);
-                    cout << "Camera calibrated using " << savedImages.size() << " images!" << endl;
+                    cout << "   Enough images saved! Starting calibration...     ";                                 // Output message to confirm that we have more than 15 saved images
+                    cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);   // Run cameraCalibration function
+                    saveCameraCalibration("cameraCalibration", cameraMatrix, distanceCoefficients);                 // Run saveCameraCalibration function to output to text file
+                    cout << "Camera calibrated using " << savedImages.size() << " images!" << endl;                 // Output message to confirm that the camera parameters have been found using the provided saved images
                 } else {
-                    cout << "   Not enough saved images! Press space a few more times..." << endl;
+                    cout << "   Not enough saved images! Press space a few more times..." << endl;                  // Output message warning us that not enough images have been saved
                 }
                 break;
-            case 27:                                              // Escape Key: Exit
-                cout << "Input <ESC> recieved! Exiting..." << endl;
-                return 0;
+            case 27:                                                                                                // Escape Key: Exit
+                cout << "Input <ESC> recieved! Exiting..." << endl;                                                 // Output message to confirm that we have pressed the escape key
+                return 0;                                                                                           // End program
                 break;
         }
 
