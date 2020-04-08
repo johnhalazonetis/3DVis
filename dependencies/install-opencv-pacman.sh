@@ -1,4 +1,4 @@
-#Install OpenCV on Unix
+# Install OpenCV on Arch Linux or Manjaro
 
 # First we update the system and install the dependencies:
 sudo pacman -Syu
