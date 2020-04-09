@@ -6,11 +6,11 @@ find_package( OpenCV REQUIRED )
 
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
-add_executable( OpenAndMoveWindows src/OpenAndMoveWindows.cpp )
-add_executable( PixelPerfect src/PixelPerfect.cpp )
-add_executable( SplitAndMerge src/SplitAndMerge.cpp )
+add_executable( OpenAndMoveWindows src/basics/OpenAndMoveWindows.cpp )
+add_executable( PixelPerfect src/basics/PixelPerfect.cpp )
+add_executable( SplitAndMerge src/basics/SplitAndMerge.cpp )
 add_executable( dft src/dft.cpp )
-add_executable( capture src/capture.cpp )
+add_executable( capture src/basics/capture.cpp )
 add_executable( aruco src/aruco.cpp )
 
 target_link_libraries( OpenAndMoveWindows ${OpenCV_LIBS} )

@@ -13,7 +13,7 @@ using namespace std;
 using namespace cv;
 
 const float calibrationSquareDimension = 0.03f;     // Dimension of side of one square [m]
-const float arucoSquareDimension = 0.0382f;        // Dimension of side of one aruco square [m]
+const float arucoSquareDimension = 0.0382f;         // Dimension of side of one aruco square [m]
 const Size chessboardDimensions = Size(4, 8);       // Number of square on Chessboard calibration page
 
 void createArucoMarkers()                           // Function to create the Aruco markers for us and put them in the "markers" directory
@@ -179,6 +179,8 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
         uint16_t rows;
         uint16_t columns;
 
+
+        // Camera Matrix
         inStream >> rows;
         inStream >> columns;
 
@@ -193,7 +195,7 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
             }
         }
 
-        //Distance Coefficients
+        // Distance Coefficients
         inStream >> rows;
         inStream >> columns;
 
@@ -222,7 +224,7 @@ int main(int argv, char** argc)
 {
     Mat frame;                                                      // Define frame as matrix
 
-    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                      // Define camera calibration matrix
+    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);           // Define camera calibration matrix
 
     Mat distanceCoefficients;                                       // Define distance coefficients matrix
 
@@ -237,13 +239,9 @@ int main(int argv, char** argc)
         return -1;
     }
 
-    int framesPerSecond = 60;                                       // Define the framerate of the videos we are dealing with
 
     namedWindow("Video Input", WINDOW_AUTOSIZE);                    // Make window with video input
 
-    long double delay = 1000 / framesPerSecond;
-
-    long double duration;
 
     while(true)                                                     // Loop until exit
     {
@@ -294,7 +292,6 @@ int main(int argv, char** argc)
             case 27:                                                                                                // Escape Key: Exit
                 cout << "Input <ESC> recieved! Exiting..." << endl;                                                 // Output message to confirm that we have pressed the escape key
                 return 0;                                                                                           // End program
-                break;
         }
 
     }
