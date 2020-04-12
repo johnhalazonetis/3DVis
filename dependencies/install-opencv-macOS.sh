@@ -4,7 +4,7 @@
 xcode-select --install
 
 # Then we download the latest version of OpenCV:
-mkdir opcv_install && cd opcv_install
+mkdir ~/opcv_install && cd ~/opcv_install
 
 git clone https://github.com/Itseez/opencv.git
 
@@ -19,6 +19,10 @@ cd release
 
 cmake -D BUILD_TIFF=ON -D WITH_CUDA=OFF -D ENABLE_AVX=OFF -D WITH_OPENGL=OFF -D WITH_OPENCL=OFF -D WITH_IPP=OFF -D WITH_TBB=ON -D BUILD_TBB=ON -D WITH_EIGEN=OFF -D WITH_V4L=OFF -D WITH_VTK=OFF -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D OPENCV_EXTRA_MODULES_PATH=~/opcv_install/opencv_contrib/modules ~/opcv_install/opencv/
 
-make -j2	# You can change the number of cores you want to use to build the library
+# Ask how many threads we want to use to make the library
+read -p "How many threads to do you want to use to make OpenCV?: " ThreadNumber
+sudo make -j$ThreadNumber
 
-make install
+sudo make install
+
+rm -rf ~/opcv_install
