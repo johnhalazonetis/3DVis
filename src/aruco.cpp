@@ -48,62 +48,62 @@ void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Poi
     }
 }
 
-void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundCorners, bool showResults = false)
+void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundCorners, bool showResults = false)                           // Function to find chessboard corners from a set of images
 {
-    for (vector<Mat>::iterator iter = images.begin(); iter != images.end(); iter++)
+    for (vector<Mat>::iterator iter = images.begin(); iter != images.end(); iter++)                                                         // Loop through the saved images
     {
-        vector<Point2f> pointBuf;
+        vector<Point2f> pointBuf;                                                                                                           // Define a vector of 2D points for the points detected called pointBuf
 
-        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);
+        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);     // Execute findChessboardCorners (built into OpenCV) to find the corners of the image
 
-        if (found)
+        if (found)                                                                                                                          // If we have found the corners
         {
-            allFoundCorners.push_back(pointBuf);
+            allFoundCorners.push_back(pointBuf);                                                                                            // Put the found points into pointBuf
         }
 
-        if (showResults)
+        if (showResults)                                                                                                                    // If we have asked to show the results
         {
-            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);
+            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);                                                            // Draw the chessboard
             imshow("Looking for corners", *iter);
             waitKey(0);
         }
     }
 }
 
-int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension)
+int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension)     // Function find aruco codes in video
 {
-    Mat frame;
+    Mat frame;                                                                                                      // Define a matrix as the current frame
 
-    vector<int> markerIDs;
-    vector<vector<Point2f>> markerCorners, rejectedCandidates;
+    vector<int> markerIDs;                                                                                          // Make a vector of integers with the marker IDs
+    vector<vector<Point2f>> markerCorners, rejectedCandidates;                                                      // Make a vector of vectors with the markerCorners, and the rejected candidates
 
-    aruco::DetectorParameters parameters;
-    Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);
+    aruco::DetectorParameters parameters;                                                                           // Detect the parameters of the aruco codes
+    Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);   // Define the aruco dictionary as the standard 4x4 dictionary
 
-    VideoCapture vid("../videos/aruco.mov");
+    VideoCapture vid("../videos/aruco.mov");                                                                        // Define video capturing element
 
-    if (!vid.isOpened()) {
+    if (!vid.isOpened()) {                                                                                          // If we cannot open the video, exit the program
         return -1;
     }
 
-    namedWindow("Video", WINDOW_AUTOSIZE);
+    namedWindow("Video", WINDOW_AUTOSIZE);                                                                          // Create a named window
 
-    vector<Vec3d> rotationVectors, translationVectors;
+    vector<Vec3d> rotationVectors, translationVectors;                                                              // Create a vector of 3d vectors containing the rotation and translation vectors
 
-    while (true) {
-        if (!vid.read(frame)) {
+    while (true) {                                                                                                  // Loop
+        if (!vid.read(frame)) {                                                                                     // If we cannot read the frame, exit the loop
           break;
         }
 
-        aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);
-        aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors);
+        aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
+        aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
 
-        for (int i = 0; i < markerIDs.size(); i++)
+        for (int i = 0; i < markerIDs.size(); i++)                                                                  // Loop over all of the aruco markers in the frame
         {
-            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors, 0.1f);
+            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors, 0.1f);  // Draw the axis on each of the aruco corners
         }
 
-        imshow("Video", frame);
+        imshow("Video", frame);                                                                                     // If it takes more than 30 milliseconds to perform this task, skip and move onto the next frame
         if (waitKey(30) >= 0) {
           break;
         }
@@ -112,10 +112,10 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 
 }
 
-void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)
+void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)     // Function to calibrate cameras
 {
-    vector<vector<Point2f>> chessboardImageSpacePoints;
-    getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);
+    vector<vector<Point2f>> chessboardImageSpacePoints;                                                                                         // Define identified points from chessboard into a vector of vectors
+    getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);                                                                 // Get points from chessboard using getChessboardCorners (function built into OpenCV)
 
     vector<vector<Point3f>> worldSpaceCornerPoints(1);
 
@@ -125,7 +125,7 @@ void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squa
     vector<Mat> rVectors, tVectors;
     distanceCoefficients = Mat::zeros(8, 1, CV_64F);
 
-    calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distanceCoefficients, rVectors, tVectors);
+    calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distanceCoefficients, rVectors, tVectors);     // Function to calibrate camera from the previously cmoputed data
 
 
 }
@@ -171,14 +171,13 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
     return false;
 }
 
-bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients) {
+bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients) {     // Function to load camera calibration matrix
 
     ifstream inStream(name);
 
     if (inStream){
         uint16_t rows;
         uint16_t columns;
-
 
         // Camera Matrix
         inStream >> rows;
