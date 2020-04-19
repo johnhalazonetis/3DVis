@@ -5,8 +5,10 @@
 # Ignore build directory
 build/
 
-# Ignore video directory
+# Ignore video and calibration images directory
 videos/
+calibration_images/
+other_calib_images/
 
 # Ignore markers directory
 markers/

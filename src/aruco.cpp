@@ -115,7 +115,7 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)     // Function to calibrate cameras
 {
     vector<vector<Point2f>> chessboardImageSpacePoints;                                                                                         // Define identified points from chessboard into a vector of vectors
-    getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);                                                                 // Get points from chessboard using getChessboardCorners (function built into OpenCV)
+    getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);                                                                 // Get points from chessboard using getChessboardCorners
 
     vector<vector<Point3f>> worldSpaceCornerPoints(1);
 
