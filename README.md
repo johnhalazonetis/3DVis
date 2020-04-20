@@ -58,4 +58,4 @@ If you do have a debian-based system, you can follow the instruction below to in
 
 #### Documentation of Used Libraries
 
-* [OpenCV 4.2.0 Documentation](https://docs.opencv.org/4.2.0/index.html)
+* [OpenCV 4.3.0 Documentation](https://docs.opencv.org/4.3.0/index.html)

@@ -37,39 +37,6 @@ void createArucoMarkers()                                               // Funct
 
 }
 
-void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Point3f>& corners)
-{
-    for (int i = 0; i < boardSize.height; i++)
-    {
-        for (int j = 0; j < boardSize.width; j++)
-        {
-            corners.push_back(Point3f(j * squareEdgeLength, i * squareEdgeLength, 0.0f));
-        }
-    }
-}
-
-void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundCorners, bool showResults = false)                           // Function to find chessboard corners from a set of images
-{
-    for (vector<Mat>::iterator iter = images.begin(); iter != images.end(); iter++)                                                         // Loop through the saved images
-    {
-        vector<Point2f> pointBuf;                                                                                                           // Define a vector of 2D points for the points detected called pointBuf
-
-        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);     // Execute findChessboardCorners (built into OpenCV) to find the corners of the image
-
-        if (found)                                                                                                                          // If we have found the corners
-        {
-            allFoundCorners.push_back(pointBuf);                                                                                            // Put the found points into pointBuf
-        }
-
-        if (showResults)                                                                                                                    // If we have asked to show the results
-        {
-            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);                                                            // Draw the chessboard
-            imshow("Looking for corners", *iter);
-            waitKey(0);
-        }
-    }
-}
-
 int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension)     // Function find aruco codes in video
 {
     Mat frame;                                                                                                      // Define a matrix as the current frame
@@ -80,7 +47,7 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
     aruco::DetectorParameters parameters;                                                                           // Detect the parameters of the aruco codes
     Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);   // Define the aruco dictionary as the standard 4x4 dictionary
 
-    VideoCapture vid("../videos/aruco-40.mov");                                                                        // Define video capturing element
+    VideoCapture vid("../videos/aruco-40.mov");                                                                     // Define video capturing element
 
     if (!vid.isOpened()) {                                                                                          // If we cannot open the video, exit the program
         return -1;
@@ -97,83 +64,30 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 
         aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
         
-        cout << "Number of markers detected: " << markerIDs.size() << endl;
+        string displayText = "Number of marker detected: " + to_string(markerIDs.size());
+        Point textOrg(20, 30);
+        putText(frame, displayText, textOrg, FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+
 
         if (markerIDs.size() > 0)
         {
-            aruco::drawDetectedMarkers(frame, markerCorners, markerIDs);
+            // aruco::drawDetectedMarkers(frame, markerCorners, markerIDs);
 
             vector<Vec3d> rvec, tvec;
-            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
+            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)            
 
-            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec, tvec, 0.1f);  // Draw the axis on each of the aruco corners            
+            for (int i = 0; i != markerIDs.size(); i++)
+            {
+                aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec[i], tvec[i], 0.1f);                 // Draw the axis on each of the aruco corners
+            }
+            
+        }
 
-        }       
-
-        imshow("Video", frame);                                                                                     // If it takes more than x milliseconds to perform this task, skip and move onto the next frame
+        imshow("Video", frame);
         waitKey(1);
     }
     return 1;
 
-}
-
-void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)     // Function to calibrate cameras
-{
-    vector<vector<Point2f>> chessboardImageSpacePoints;                                                                                         // Define identified points from chessboard into a vector of vectors
-    getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);                                                                 // Get points from chessboard using getChessboardCorners
-
-    vector<vector<Point3f>> worldSpaceCornerPoints(1);
-
-    createKnownBoardPosition(boardSize, squareEdgeLength, worldSpaceCornerPoints[0]);
-    worldSpaceCornerPoints.resize(chessboardImageSpacePoints.size(), worldSpaceCornerPoints[0]);
-
-    vector<Mat> rVectors, tVectors;
-    distanceCoefficients = Mat::zeros(8, 1, CV_64F);
-
-    calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distanceCoefficients, rVectors, tVectors);     // Function to calibrate camera from the previously cmoputed data
-
-
-}
-
-bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficients) {
-    ofstream outStream(name);
-    if (outStream)
-    {
-        uint16_t rows = cameraMatrix.rows;
-        uint16_t columns = cameraMatrix.cols;
-
-        outStream << rows << endl;
-        outStream << columns << endl;
-
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < columns; c++)
-            {
-                double value = cameraMatrix.at<double>(r, c);
-                outStream << value << endl;
-            }
-        }
-
-        rows = distanceCoefficients.rows;
-        columns = distanceCoefficients.cols;
-
-        outStream << rows << endl;
-        outStream << columns << endl;
-
-        for (int r = 0; r < rows; r++)
-        {
-            for (int c = 0; c < columns; c++)
-            {
-                double value = distanceCoefficients.at<double>(r, c);
-                outStream << value << endl;
-            }
-        }
-
-        outStream.close();
-        return true;
-    }
-
-    return false;
 }
 
 bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients, bool showResults = false) {     // Function to load camera calibration matrix
@@ -243,9 +157,10 @@ int main(int argv, char** argc)
 
     cout << "Loading camera calibration matrix..." << endl;
     loadCameraCalibration("../cameraCalibration", cameraMatrix, distanceCoefficients);
-    cout << "Camera parameters loaded! Starting monitoring for aruco codes..." << endl << endl;
+    
+    cout << "Camera matrix:" << endl << cameraMatrix << endl << endl;
 
-    cout << "Camera matrix:" << endl << cameraMatrix << endl;
+    cout << "Camera parameters loaded! Starting monitoring for aruco codes..." << endl << endl;
 
     startCameraMonitoring(cameraMatrix, distanceCoefficients, arucoSquareDimension);
 
