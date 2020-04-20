@@ -80,7 +80,7 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
     aruco::DetectorParameters parameters;                                                                           // Detect the parameters of the aruco codes
     Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);   // Define the aruco dictionary as the standard 4x4 dictionary
 
-    VideoCapture vid("../videos/aruco.mov");                                                                        // Define video capturing element
+    VideoCapture vid("../videos/aruco-40.mov");                                                                        // Define video capturing element
 
     if (!vid.isOpened()) {                                                                                          // If we cannot open the video, exit the program
         return -1;
@@ -92,21 +92,26 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 
     while (true) {                                                                                                  // Loop
         if (!vid.read(frame)) {                                                                                     // If we cannot read the frame, exit the loop
-          break;
+            break;
         }
 
         aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
-        aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
+        
+        cout << "Number of markers detected: " << markerIDs.size() << endl;
 
-        for (int i = 0; i < markerIDs.size(); i++)                                                                  // Loop over all of the aruco markers in the frame
+        if (markerIDs.size() > 0)
         {
-            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rotationVectors, translationVectors, 0.1f);  // Draw the axis on each of the aruco corners
-        }
+            aruco::drawDetectedMarkers(frame, markerCorners, markerIDs);
 
-        imshow("Video", frame);                                                                                     // If it takes more than 30 milliseconds to perform this task, skip and move onto the next frame
-        if (waitKey(30) >= 0) {
-          break;
-        }
+            vector<Vec3d> rvec, tvec;
+            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
+
+            aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec, tvec, 0.1f);  // Draw the axis on each of the aruco corners            
+
+        }       
+
+        imshow("Video", frame);                                                                                     // If it takes more than x milliseconds to perform this task, skip and move onto the next frame
+        waitKey(1);
     }
     return 1;
 
@@ -171,7 +176,7 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
     return false;
 }
 
-bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients) {     // Function to load camera calibration matrix
+bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients, bool showResults = false) {     // Function to load camera calibration matrix
 
     ifstream inStream(name);
 
@@ -188,9 +193,14 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
         for (int r = 0; r < rows; r++){
             for(int c = 0; c < columns; c++){
                 double read = 0.0f;
+                
                 inStream >> read;
                 cameraMatrix.at<double>(r, c) = read;
-                cout << cameraMatrix.at<double>(r, c) << endl;
+                
+                if (showResults)
+                {
+                    cout << cameraMatrix.at<double>(r, c) << endl;
+                }
             }
         }
 
@@ -207,7 +217,11 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
                 inStream >> read;
 
                 distanceCoefficients.at<double>(r, c) = read;
-                cout << distanceCoefficients.at<double>(r, c) << endl;
+                
+                if (showResults)
+                {
+                    cout << distanceCoefficients.at<double>(r, c) << endl;
+                }
             }
         }
         inStream.close();
@@ -221,79 +235,19 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
 
 int main(int argv, char** argc)
 {
-    Mat frame;                                                      // Define frame as matrix
-
     Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                      // Define camera calibration matrix
 
     Mat distanceCoefficients;                                       // Define distance coefficients matrix
 
-    vector<Mat> savedImages;
-
-    vector<vector<Point2f>> markerCorners, rejectedCandidates;
-
-    VideoCapture vid("../videos/chessboard-4.mov");                 // Define VideoCapture element (where we define the input source of the video)
-
-    if (!vid.isOpened())                                            // If no video is detected, exit the program
-    {
-        return -1;
-    }
-
-
     namedWindow("Video Input", WINDOW_AUTOSIZE);                    // Make window with video input
 
+    cout << "Loading camera calibration matrix..." << endl;
+    loadCameraCalibration("../cameraCalibration", cameraMatrix, distanceCoefficients);
+    cout << "Camera parameters loaded! Starting monitoring for aruco codes..." << endl << endl;
 
-    while(true)                                                     // Loop until exit
-    {
+    cout << "Camera matrix:" << endl << cameraMatrix << endl;
 
-        if (!vid.read(frame))                                       // If we can't read the frame, break the loop
-        {
-            break;
-        }
-
-        vector<Vec2f> foundPoints;                                  // Define vector where the found points are on the image
-
-
-        bool found = findChessboardCorners(frame, chessboardDimensions, foundPoints, CALIB_CB_NORMALIZE_IMAGE);     // Use findChessboardCorners function (built into OpenCV) to find points on chessboard and put coordinates into foundPoint vector
-
-        drawChessboardCorners(frame, chessboardDimensions, foundPoints, found);                                     // Use drawChessboardCorners function (built into OpenCV) to draw chessboard corners on drawToFrame frame
-
-
-        imshow("Video", frame);                                                                                     // Show the frame
-
-        char character = waitKey(1);
-
-        switch(character)                                                                                           // Depending on which character we press on the keyboard...
-        {
-            case ' ':                                                                                               // Space Bar: Save Image
-                cout << "Input <SPACE> recieved" << endl;                                                           // Output message
-                if (found)                                                                                          // If the chessboard is found in the current frame...
-                {
-                    Mat temp;                                                                                       // Create a temporary matrix
-                    frame.copyTo(temp);                                                                             // Copy the frame to the temporary matrix
-                    savedImages.push_back(temp);                                                                    // Add the temporary frame to the list of saved images
-                    cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;               // Output message to confirm that the image was saved
-                } else {
-                    cout << "   No chessboard found in this frame, try another!" << endl;                           // Output message telling us that the chessboard was not found in that frame
-                }
-                break;
-            case 13:                                                                                                // Enter Key: Start calibration
-                cout << "Input <ENTER> recieved!" << endl;;                                                         // Output message
-                if (savedImages.size() > 15)                                                                        // If there are more than 15 images saved...
-                {
-                    cout << "   Enough images saved! Starting calibration...     ";                                 // Output message to confirm that we have more than 15 saved images
-                    cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);   // Run cameraCalibration function
-                    saveCameraCalibration("cameraCalibration", cameraMatrix, distanceCoefficients);                 // Run saveCameraCalibration function to output to text file
-                    cout << "Camera calibrated using " << savedImages.size() << " images!" << endl;                 // Output message to confirm that the camera parameters have been found using the provided saved images
-                } else {
-                    cout << "   Not enough saved images! Press space a few more times..." << endl;                  // Output message warning us that not enough images have been saved
-                }
-                break;
-            case 27:                                                                                                // Escape Key: Exit
-                cout << "Input <ESC> recieved! Exiting..." << endl;                                                 // Output message to confirm that we have pressed the escape key
-                return 0;                                                                                           // End program
-        }
-
-    }
+    startCameraMonitoring(cameraMatrix, distanceCoefficients, arucoSquareDimension);
 
     return 0;
 }
