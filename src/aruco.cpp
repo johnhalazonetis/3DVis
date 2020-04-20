@@ -65,8 +65,8 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
         aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
         
         string displayText = "Number of marker detected: " + to_string(markerIDs.size());
-        Point textOrg(20, 30);
-        putText(frame, displayText, textOrg, FONT_HERSHEY_COMPLEX_SMALL, 1, Scalar::all(255), 1, 8);
+        Point textOrg(20, 40);
+        putText(frame, displayText, textOrg, FONT_HERSHEY_SIMPLEX, 1, Scalar::all(255), 1, 8);
 
 
         if (markerIDs.size() > 0)
@@ -74,11 +74,11 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
             // aruco::drawDetectedMarkers(frame, markerCorners, markerIDs);
 
             vector<Vec3d> rvec, tvec;
-            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)            
+            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
 
             for (int i = 0; i != markerIDs.size(); i++)
             {
-                aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec[i], tvec[i], 0.1f);                 // Draw the axis on each of the aruco corners
+                aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec[i], tvec[i], 0.1f);                 // Draw the axis on each of the aruco corners (built into OpenCV Aruco)
             }
             
         }
@@ -158,7 +158,7 @@ int main(int argv, char** argc)
     cout << "Loading camera calibration matrix..." << endl;
     loadCameraCalibration("../cameraCalibration", cameraMatrix, distanceCoefficients);
     
-    cout << "Camera matrix:" << endl << cameraMatrix << endl << endl;
+    // cout << "Camera matrix:" << endl << cameraMatrix << endl << endl;
 
     cout << "Camera parameters loaded! Starting monitoring for aruco codes..." << endl << endl;
 
