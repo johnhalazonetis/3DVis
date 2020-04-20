@@ -25,22 +25,22 @@ void createKnownBoardPosition(Size boardSize, float squareEdgeLength, vector<Poi
     }
 }
 
-void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundCorners, bool showResults = false)                           // Function to find chessboard corners from a set of images
+void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundCorners, bool showResults = false)   // Function to find chessboard corners from a set of images
 {
-    for (vector<Mat>::iterator iter = images.begin(); iter != images.end(); iter++)                                                         // Loop through the saved images
+    for (vector<Mat>::iterator iter = images.begin(); iter != images.end(); iter++)                                 // Loop through the saved images
     {
-        vector<Point2f> pointBuf;                                                                                                           // Define a vector of 2D points for the points detected called pointBuf
+        vector<Point2f> pointBuf;                                                                                   // Define a vector of 2D points for the points detected called pointBuf
 
-        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_NORMALIZE_IMAGE & CALIB_CB_FAST_CHECK);     // Execute findChessboardCorners (built into OpenCV) to find the corners of the image
+        bool found = findChessboardCorners(*iter, chessboardDimensions, pointBuf, CALIB_CB_NORMALIZE_IMAGE);        // Execute findChessboardCorners (built into OpenCV) to find the corners of the image
 
-        if (found)                                                                                                                          // If we have found the corners
+        if (found)                                                                                                  // If we have found the corners
         {
-            allFoundCorners.push_back(pointBuf);                                                                                            // Put the found points into pointBuf
+            allFoundCorners.push_back(pointBuf);                                                                    // Put the found points into pointBuf
         }
 
-        if (showResults)                                                                                                                    // If we have asked to show the results
+        if (showResults)                                                                                            // If we have asked to show the results
         {
-            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);                                                            // Draw the chessboard
+            drawChessboardCorners(*iter, chessboardDimensions, pointBuf, found);                                    // Draw the chessboard
             imshow("Looking for corners", *iter);
             waitKey(0);
         }
@@ -61,7 +61,6 @@ void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squa
     distanceCoefficients = Mat::zeros(8, 1, CV_64F);
 
     calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distanceCoefficients, rVectors, tVectors);     // Function to calibrate camera from the previously cmoputed data
-
 
 }
 
@@ -139,21 +138,19 @@ int main(int argv, char** argc)
 
         bool found = findChessboardCorners(frame, chessboardDimensions, foundPoints, CALIB_CB_NORMALIZE_IMAGE);     // Use findChessboardCorners function (built into OpenCV) to find points on chessboard and put coordinates into foundPoint vector
 
-        drawChessboardCorners(frame, chessboardDimensions, foundPoints, found);                                     // Use drawChessboardCorners function (built into OpenCV) to draw chessboard corners on drawToFrame frame
+        drawChessboardCorners(frame, chessboardDimensions, foundPoints, found);                 // Use drawChessboardCorners function (built into OpenCV) to draw chessboard corners on drawToFrame frame
 
-        if (found)                                                                                          // If the chessboard is found in the current frame...
+        if (found)                                                                              // If the chessboard is found in the current frame...
         {
-            Mat temp;                                                                                       // Create a temporary matrix
-            frame.copyTo(temp);                                                                             // Copy the frame to the temporary matrix
-            savedImages.push_back(temp);                                                                    // Add the temporary frame to the list of saved images
-            cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;               // Output message to confirm that the image was saved
+            Mat temp;                                                                           // Create a temporary matrix
+            frame.copyTo(temp);                                                                 // Copy the frame to the temporary matrix
+            savedImages.push_back(temp);                                                        // Add the temporary frame to the list of saved images
+            cout << "   Image saved. Number of saved images: " << savedImages.size() << endl;   // Output message to confirm that the image was saved
         } else {
-            cout << "   No chessboard found in this frame!" << endl;                           // Output message telling us that the chessboard was not found in that frame
+            cout << "   No chessboard found in this frame!" << endl;                            // Output message telling us that the chessboard was not found in that frame
         }
 
     }
-
-    destroyAllWindows();
 
     cout << savedImages.size() << " chessboards found out of " << numberCalibrationImages << " images, starting calibration..." << endl;    // Output message to inform the program has successfully exited the loop and started calibrating
     cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);   // Run cameraCalibration function
