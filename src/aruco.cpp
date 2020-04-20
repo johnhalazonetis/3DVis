@@ -12,12 +12,11 @@
 using namespace std;
 using namespace cv;
 
-const float calibrationSquareDimension = 0.03f;     // Dimension of side of one square [m]
 const float arucoSquareDimension = 0.0382f;         // Dimension of side of one aruco square [m]
 const Size chessboardDimensions = Size(4, 8);       // Number of square on Chessboard calibration page
 
-void createArucoMarkers()                                               // Function to create the Aruco markers for us and put them in the "markers" directory
-{
+void createArucoMarkers() {                                             // Function to create the Aruco markers for us and put them in the "markers" directory
+
     Mat outputMarker;                                                   // Define matrix where we have the output marker
 
     Ptr<aruco::Dictionary> markerDictionary = aruco::getPredefinedDictionary(aruco::PREDEFINED_DICTIONARY_NAME::DICT_4X4_50);       // Define the marker dictionary from the standard dictionary, we take the dictionary with 50 markers of 4x4 squares
@@ -37,8 +36,57 @@ void createArucoMarkers()                                               // Funct
 
 }
 
-int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension)     // Function find aruco codes in video
-{
+void inverseOfCameraMatrix(const Mat& cameraMatrix, Mat inverseCameraMatrix) {  // Function to calculate inverse of camera matrix (specific to 3x3 upper traignel matrices)
+    Mat inverseCameraMatrix = Mat::zeros(3, 3, CV_64F);
+
+    double a = cameraMatrix.at<double>(0, 0);
+    double b = cameraMatrix.at<double>(0, 1);
+    double c = cameraMatrix.at<double>(0, 2);
+    double d = cameraMatrix.at<double>(1, 1);
+    double e = cameraMatrix.at<double>(1, 2);
+    double f = cameraMatrix.at<double>(2, 2);
+
+    inverseCameraMatrix.at<double>(0, 0) = 1/a;
+    inverseCameraMatrix.at<double>(0, 1) = -b/(a*d);
+    inverseCameraMatrix.at<double>(0, 2) = (b*e - c*d)/(a*f*d);
+    inverseCameraMatrix.at<double>(1, 1) = 1/d;
+    inverseCameraMatrix.at<double>(1, 2) = -e/(f*d);
+    inverseCameraMatrix.at<double>(2, 2) = 1/f;
+
+}
+
+void drawDetectedMarkerAxis(InputOutputArray _image, InputArrayOfArrays _corners, InputArray _ids, Scalar borderColor, InputArray cameraMatrix) {
+
+    CV_Assert(_image.getMat().total() != 0 && (_image.getMat().channels() == 1 || _image.getMat().channels() == 3));
+    CV_Assert((_corners.total() == _ids.total()) || _ids.total() == 0);
+
+    // calculate colors
+    Scalar textColor, cornerColor;
+    textColor = cornerColor = borderColor;
+    swap(textColor.val[0], textColor.val[1]);     // text color just swap G and R
+    swap(cornerColor.val[1], cornerColor.val[2]); // corner color just swap G and B
+
+    int nMarkers = (int)_corners.total();
+    for(int i = 0; i < nMarkers; i++) {
+        Mat currentMarker = _corners.getMat(i);
+        CV_Assert(currentMarker.total() == 4 && currentMarker.type() == CV_32FC2);
+
+        // Draw marker axis
+        Point2f originPoint, xPoint, yPoint, zPoint;
+        originPoint = currentMarker.ptr< Point2f >(0)[2];
+        xPoint = currentMarker.ptr< Point2f >(0)[1];
+        yPoint = currentMarker.ptr< Point2f >(0)[3];
+        arrowedLine(_image, originPoint, xPoint, borderColor, 1, 8, 0, 0.2);
+        arrowedLine(_image, originPoint, yPoint, borderColor, 1, 8, 0, 0.2);
+
+        // Draw first corner mark
+        rectangle(_image, currentMarker.ptr< Point2f >(0)[2] - Point2f(3, 3), currentMarker.ptr< Point2f >(0)[2] + Point2f(3, 3), cornerColor, 1, LINE_AA);
+
+    }
+}
+
+int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension) {   // Function find aruco codes in video
+
     Mat frame;                                                                                                      // Define a matrix as the current frame
 
     vector<int> markerIDs;                                                                                          // Make a vector of integers with the marker IDs
@@ -64,23 +112,18 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 
         aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
         
-        string displayText = "Number of marker detected: " + to_string(markerIDs.size());
-        Point textOrg(20, 40);
-        putText(frame, displayText, textOrg, FONT_HERSHEY_SIMPLEX, 1, Scalar::all(255), 1, 8);
+        // Display how many aruco codes are found in the frame:
+        string displayText = "Number of marker detected: " + to_string(markerIDs.size());                           // Define string of text
+        Point textOrg(20, 40);                                                                                      // Position of text in frame
+        putText(frame, displayText, textOrg, FONT_HERSHEY_SIMPLEX, 1, Scalar::all(255), 1, 8);                      // Function to put the text (built into OpenCV) to write text in frame
 
+        vector<Vec3d> rotationVector, translationVector;                                                            // Define rotation and translation vectors
 
         if (markerIDs.size() > 0)
         {
-            // aruco::drawDetectedMarkers(frame, markerCorners, markerIDs);
+            drawDetectedMarkerAxis(frame, markerCorners, markerIDs, (255, 0, 255), cameraMatrix);
 
-            vector<Vec3d> rvec, tvec;
-            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rvec, tvec);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)
-
-            for (int i = 0; i != markerIDs.size(); i++)
-            {
-                aruco::drawAxis(frame, cameraMatrix, distanceCoefficients, rvec[i], tvec[i], 0.1f);                 // Draw the axis on each of the aruco corners (built into OpenCV Aruco)
-            }
-            
+            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVector, translationVector);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)         
         }
 
         imshow("Video", frame);
@@ -147,8 +190,8 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
 }
 
 
-int main(int argv, char** argc)
-{
+int main(int argv, char** argc) {
+
     Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                      // Define camera calibration matrix
 
     Mat distanceCoefficients;                                       // Define distance coefficients matrix
