@@ -37,7 +37,7 @@ void createArucoMarkers() {                                             // Funct
 }
 
 void inverseOfCameraMatrix(const Mat& cameraMatrix, Mat inverseCameraMatrix) {  // Function to calculate inverse of camera matrix (specific to 3x3 upper traignel matrices)
-    Mat inverseCameraMatrix = Mat::zeros(3, 3, CV_64F);
+    inverseCameraMatrix = Mat::zeros(3, 3, CV_64F);
 
     double a = cameraMatrix.at<double>(0, 0);
     double b = cameraMatrix.at<double>(0, 1);
@@ -55,16 +55,10 @@ void inverseOfCameraMatrix(const Mat& cameraMatrix, Mat inverseCameraMatrix) {  
 
 }
 
-void drawDetectedMarkerAxis(InputOutputArray _image, InputArrayOfArrays _corners, InputArray _ids, Scalar borderColor, InputArray cameraMatrix) {
+void drawDetectedMarkerAxis(InputOutputArray _image, InputArrayOfArrays _corners, InputArray _ids, const Mat& cameraMatrix, bool showID = false) {
 
     CV_Assert(_image.getMat().total() != 0 && (_image.getMat().channels() == 1 || _image.getMat().channels() == 3));
     CV_Assert((_corners.total() == _ids.total()) || _ids.total() == 0);
-
-    // calculate colors
-    Scalar textColor, cornerColor;
-    textColor = cornerColor = borderColor;
-    swap(textColor.val[0], textColor.val[1]);     // text color just swap G and R
-    swap(cornerColor.val[1], cornerColor.val[2]); // corner color just swap G and B
 
     int nMarkers = (int)_corners.total();
     for(int i = 0; i < nMarkers; i++) {
@@ -76,16 +70,36 @@ void drawDetectedMarkerAxis(InputOutputArray _image, InputArrayOfArrays _corners
         originPoint = currentMarker.ptr< Point2f >(0)[2];
         xPoint = currentMarker.ptr< Point2f >(0)[1];
         yPoint = currentMarker.ptr< Point2f >(0)[3];
-        arrowedLine(_image, originPoint, xPoint, borderColor, 1, 8, 0, 0.2);
-        arrowedLine(_image, originPoint, yPoint, borderColor, 1, 8, 0, 0.2);
+        Point2f translation;
+        translation = 0.5*(xPoint - originPoint) + 0.5*(yPoint - originPoint);
+
+        line(_image, originPoint + translation, xPoint + translation, cv::Scalar(0, 0, 255), 1, 8, 0);
+        line(_image, originPoint + translation, yPoint + translation, cv::Scalar(0, 255, 0), 1, 8, 0);
+
+        Mat inverseCameraMatrix;
+        inverseOfCameraMatrix(cameraMatrix, inverseCameraMatrix);
 
         // Draw first corner mark
-        rectangle(_image, currentMarker.ptr< Point2f >(0)[2] - Point2f(3, 3), currentMarker.ptr< Point2f >(0)[2] + Point2f(3, 3), cornerColor, 1, LINE_AA);
+        rectangle(_image, currentMarker.ptr< Point2f >(0)[2] - Point2f(3, 3) + translation, currentMarker.ptr< Point2f >(0)[2] + Point2f(3, 3) + translation, cv::Scalar(255, 255, 255), 1, LINE_AA);
 
+        // Show ID number (if requested)
+        if (showID) {
+            
+            if(_ids.total() != 0) {
+                
+                Point2f cent(0, 0);
+                for(int p = 0; p < 4; p++)
+                    cent += currentMarker.ptr< Point2f >(0)[p];
+                cent = cent / 4.;
+                stringstream s;
+                s << "id=" << _ids.getMat().ptr< int >(0)[i];
+                putText(_image, s.str(), cent, FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 255, 255), 2);
+            }
+        }
     }
 }
 
-int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficients, float arucoSquareDimension) {   // Function find aruco codes in video
+int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distortionCoefficients, float arucoSquareDimension) { // Function find aruco codes in video
 
     Mat frame;                                                                                                      // Define a matrix as the current frame
 
@@ -101,9 +115,12 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
         return -1;
     }
 
-    namedWindow("Video", WINDOW_AUTOSIZE);                                                                          // Create a named window
+    cv::namedWindow("Video", WINDOW_AUTOSIZE);                                                                     // Create a named window
 
     vector<Vec3d> rotationVectors, translationVectors;                                                              // Create a vector of 3d vectors containing the rotation and translation vectors
+    Mat rotationMatrix;
+
+    int nFrame = 0;
 
     while (true) {                                                                                                  // Loop
         if (!vid.read(frame)) {                                                                                     // If we cannot read the frame, exit the loop
@@ -112,28 +129,21 @@ int startCameraMonitoring(const Mat& cameraMatrix, const Mat& distanceCoefficien
 
         aruco::detectMarkers(frame, markerDictionary, markerCorners, markerIDs);                                    // Run the detect marker function (built into OpenCV Aruco)
         
-        // Display how many aruco codes are found in the frame:
-        string displayText = "Number of marker detected: " + to_string(markerIDs.size());                           // Define string of text
-        Point textOrg(20, 40);                                                                                      // Position of text in frame
-        putText(frame, displayText, textOrg, FONT_HERSHEY_SIMPLEX, 1, Scalar::all(255), 1, 8);                      // Function to put the text (built into OpenCV) to write text in frame
-
-        vector<Vec3d> rotationVector, translationVector;                                                            // Define rotation and translation vectors
+        putText(frame, "Number of marker detected: " + to_string(markerIDs.size()), Point(20, 40), FONT_HERSHEY_SIMPLEX, 1, Scalar::all(255), 1, 8);    // Display how many aruco codes are found in the frame
 
         if (markerIDs.size() > 0)
         {
-            drawDetectedMarkerAxis(frame, markerCorners, markerIDs, (255, 0, 255), cameraMatrix);
-
-            aruco::estimatePoseSingleMarkers(markerCorners, arucoSquareDimension, cameraMatrix, distanceCoefficients, rotationVector, translationVector);     // Estimate the pose of the Aruco markers (built into OpenCV Aruco)         
+            drawDetectedMarkerAxis(frame, markerCorners, markerIDs, cameraMatrix, true);
         }
 
-        imshow("Video", frame);
-        waitKey(1);
+        cv::imshow("Video", frame);
+        cv::waitKey(1);
     }
     return 1;
 
 }
 
-bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoefficients, bool showResults = false) {     // Function to load camera calibration matrix
+bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distortionCoefficients, bool showResults = false) {     // Function to load camera calibration matrix
 
     ifstream inStream(name);
 
@@ -165,7 +175,7 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
         inStream >> rows;
         inStream >> columns;
 
-        distanceCoefficients = Mat::zeros(rows, columns, CV_64F);
+        distortionCoefficients = Mat::zeros(rows, columns, CV_64F);
 
         for (int r = 0; r < rows; r++){
             for(int c = 0; c < columns; c++){
@@ -173,11 +183,11 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
 
                 inStream >> read;
 
-                distanceCoefficients.at<double>(r, c) = read;
+                distortionCoefficients.at<double>(r, c) = read;
                 
                 if (showResults)
                 {
-                    cout << distanceCoefficients.at<double>(r, c) << endl;
+                    cout << distortionCoefficients.at<double>(r, c) << endl;
                 }
             }
         }
@@ -192,20 +202,16 @@ bool loadCameraCalibration(string name, Mat& cameraMatrix, Mat& distanceCoeffici
 
 int main(int argv, char** argc) {
 
-    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                      // Define camera calibration matrix
+    Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                          // Define camera calibration matrix
 
-    Mat distanceCoefficients;                                       // Define distance coefficients matrix
-
-    namedWindow("Video Input", WINDOW_AUTOSIZE);                    // Make window with video input
+    Mat distortionCoefficients;                                         // Define distance coefficients matrix
 
     cout << "Loading camera calibration matrix..." << endl;
-    loadCameraCalibration("../cameraCalibration", cameraMatrix, distanceCoefficients);
-    
-    // cout << "Camera matrix:" << endl << cameraMatrix << endl << endl;
+    loadCameraCalibration("../cameraCalibration", cameraMatrix, distortionCoefficients);
 
     cout << "Camera parameters loaded! Starting monitoring for aruco codes..." << endl << endl;
 
-    startCameraMonitoring(cameraMatrix, distanceCoefficients, arucoSquareDimension);
+    startCameraMonitoring(cameraMatrix, distortionCoefficients, arucoSquareDimension);
 
     return 0;
 }

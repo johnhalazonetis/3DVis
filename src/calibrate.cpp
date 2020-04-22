@@ -47,7 +47,7 @@ void getChessboardCorners(vector<Mat> images, vector<vector<Point2f>>& allFoundC
     }
 }
 
-void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distanceCoefficients)     // Function to calibrate cameras
+void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squareEdgeLength, Mat& cameraMatrix, Mat& distortionCoefficients)     // Function to calibrate cameras
 {
     vector<vector<Point2f>> chessboardImageSpacePoints;                                                                                         // Define identified points from chessboard into a vector of vectors
     getChessboardCorners(calibrationImages, chessboardImageSpacePoints, false);                                                                 // Get points from chessboard using getChessboardCorners
@@ -58,13 +58,13 @@ void cameraCalibration(vector<Mat> calibrationImages, Size boardSize, float squa
     worldSpaceCornerPoints.resize(chessboardImageSpacePoints.size(), worldSpaceCornerPoints[0]);
 
     vector<Mat> rVectors, tVectors;
-    distanceCoefficients = Mat::zeros(8, 1, CV_64F);
+    distortionCoefficients = Mat::zeros(8, 1, CV_64F);
 
-    calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distanceCoefficients, rVectors, tVectors);     // Function to calibrate camera from the previously cmoputed data
+    calibrateCamera(worldSpaceCornerPoints, chessboardImageSpacePoints, boardSize, cameraMatrix, distortionCoefficients, rVectors, tVectors);     // Function to calibrate camera from the previously cmoputed data
 
 }
 
-bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficients) {
+bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distortionCoefficients) {
     ofstream outStream(name);
     if (outStream)
     {
@@ -83,8 +83,8 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
             }
         }
 
-        rows = distanceCoefficients.rows;
-        columns = distanceCoefficients.cols;
+        rows = distortionCoefficients.rows;
+        columns = distortionCoefficients.cols;
 
         outStream << rows << endl;
         outStream << columns << endl;
@@ -93,7 +93,7 @@ bool saveCameraCalibration(string name, Mat cameraMatrix, Mat distanceCoefficien
         {
             for (int c = 0; c < columns; c++)
             {
-                double value = distanceCoefficients.at<double>(r, c);
+                double value = distortionCoefficients.at<double>(r, c);
                 outStream << value << endl;
             }
         }
@@ -111,7 +111,7 @@ int main(int argv, char** argc)
 
     Mat cameraMatrix = Mat::eye(3, 3, CV_64F);                  // Define camera calibration matrix
 
-    Mat distanceCoefficients;                                   // Define distance coefficients matrix
+    Mat distortionCoefficients;                                   // Define distance coefficients matrix
 
     vector<Mat> savedImages;                                    // Define vector of savedImages for camera calibration
 
@@ -153,9 +153,9 @@ int main(int argv, char** argc)
     }
 
     cout << savedImages.size() << " chessboards found out of " << numberCalibrationImages << " images, starting calibration..." << endl;    // Output message to inform the program has successfully exited the loop and started calibrating
-    cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distanceCoefficients);   // Run cameraCalibration function
+    cameraCalibration(savedImages, chessboardDimensions, calibrationSquareDimension, cameraMatrix, distortionCoefficients);   // Run cameraCalibration function
     cout << "Camera calibrated using " << savedImages.size() << " images!" << endl;             // Output message to confirm that the camera parameters have been found using the provided saved images
-    saveCameraCalibration("../cameraCalibration", cameraMatrix, distanceCoefficients);          // Run saveCameraCalibration function to output to text file
+    saveCameraCalibration("../cameraCalibration", cameraMatrix, distortionCoefficients);          // Run saveCameraCalibration function to output to text file
     cout << "Camera calibration saved!" << endl;;                                               // Output message to confirm that the camera parameters have been found using the provided saved images
 
     return 0;
